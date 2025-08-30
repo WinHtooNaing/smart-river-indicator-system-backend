@@ -21,24 +21,78 @@ exports.getLatestData = async (req, res) => {
   }
 };
 
+// // GET API (Weekly Page → max data per day)
+// exports.getWeeklyData = async (req, res) => {
+//   try {
+//       const oneWeekAgo = new Date();
+//   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+//   const weeklyMax = await Distance.aggregate([
+//     { $match: { timestamp: { $gte: oneWeekAgo } } },
+//     {
+//       $group: {
+//         _id: { $dayOfWeek: "$timestamp" },
+//         maxDistance: { $min: "$distance" },
+//       },
+//     },
+//     { $sort: { _id: 1 } },
+//   ]);
+
+//   res.json(weeklyMax);
+//   } catch (err) {
+//     res.status(500).send(err.message);
+//   }
+// };
+// ...existing code...
+// GET API (Weekly Page → max data per day)
+// exports.getWeeklyData = async (req, res) => {
+//   try {
+//     const oneWeekAgo = new Date();
+//     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+//     const weeklyMax = await Distance.aggregate([
+//       { $match: { timestamp: { $gte: oneWeekAgo } } },
+//       {
+//         $group: {
+//           _id: {
+//             day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } }
+//           },
+//           maxDistance: { $max: "$distance" }
+//         }
+//       },
+//       { $sort: { "_id.day": 1 } }
+//     ]);
+
+//     res.json(weeklyMax);
+//   } catch (err) {
+//     res.status(500).send(err.message);
+//   }
+// };
+// ...existing code...
+
 // GET API (Weekly Page → max data per day)
 exports.getWeeklyData = async (req, res) => {
   try {
-      const oneWeekAgo = new Date();
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to 00:00:00 of today
 
-  const weeklyMax = await Distance.aggregate([
-    { $match: { timestamp: { $gte: oneWeekAgo } } },
-    {
-      $group: {
-        _id: { $dayOfWeek: "$timestamp" },
-        maxDistance: { $min: "$distance" },
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const weeklyMax = await Distance.aggregate([
+      { $match: { timestamp: { $gte: oneWeekAgo, $lt: today } } },
+      {
+        $group: {
+          _id: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } }
+          },
+          maxDistance: { $min: "$distance" }
+        }
       },
-    },
-    { $sort: { _id: 1 } },
-  ]);
+      { $sort: { "_id.day": 1 } }
+    ]);
 
-  res.json(weeklyMax);
+    res.json(weeklyMax);
   } catch (err) {
     res.status(500).send(err.message);
   }
