@@ -10,6 +10,7 @@ const router  = Router();
 router.post("/distance", appController.sendDistanceData);
 router.get("/distance/latest", appController.getLatestData);
 router.get("/distance/weekly", appController.getWeeklyData);
+router.get("/distance/monthly", appController.getMonthlyData);
 
 module.exports = router;
     

@@ -97,3 +97,39 @@ exports.getWeeklyData = async (req, res) => {
     res.status(500).send(err.message);
   }
 };
+// GET API (Monthly Page → min and max data per day)
+exports.getMonthlyData = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to 00:00:00 of today
+
+    const oneMonthAgo = new Date(today);
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1); // 1 month back
+
+    const monthlyData = await Distance.aggregate([
+      { $match: { timestamp: { $gte: oneMonthAgo, $lt: today } } },
+      {
+        $group: {
+          _id: {
+            day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } }
+          },
+          minDistance: { $max: "$distance" },
+          maxDistance: { $min: "$distance" }
+        }
+      },
+      { $sort: { "_id.day": 1 } },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id.day",
+          minDistance: 1,
+          maxDistance: 1
+        }
+      }
+    ]);
+
+    res.json(monthlyData);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+};
