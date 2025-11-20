@@ -1,8 +1,8 @@
-const Distance = require("../model/app")
+const Distance = require("../model/app");
 
 // POST API (ESP8266 will send data here)
 exports.sendDistanceData = async (req, res) => {
-    try {
+  try {
     const { distance } = req.body;
     const newData = new Distance({ distance });
     await newData.save();
@@ -84,12 +84,12 @@ exports.getWeeklyData = async (req, res) => {
       {
         $group: {
           _id: {
-            day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } }
+            day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
           },
-          maxDistance: { $min: "$distance" }
-        }
+          maxDistance: { $min: "$distance" },
+        },
       },
-      { $sort: { "_id.day": 1 } }
+      { $sort: { "_id.day": 1 } },
     ]);
 
     res.json(weeklyMax);
@@ -111,11 +111,11 @@ exports.getMonthlyData = async (req, res) => {
       {
         $group: {
           _id: {
-            day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } }
+            day: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
           },
           minDistance: { $max: "$distance" },
-          maxDistance: { $min: "$distance" }
-        }
+          maxDistance: { $min: "$distance" },
+        },
       },
       { $sort: { "_id.day": 1 } },
       {
@@ -123,12 +123,22 @@ exports.getMonthlyData = async (req, res) => {
           _id: 0,
           date: "$_id.day",
           minDistance: 1,
-          maxDistance: 1
-        }
-      }
+          maxDistance: 1,
+        },
+      },
     ]);
 
     res.json(monthlyData);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+};
+
+// DELETE API (Delete all distance data)
+exports.deleteAllData = async (req, res) => {
+  try {
+    await Distance.deleteMany({});
+    res.status(200).send("All data deleted");
   } catch (err) {
     res.status(500).send(err.message);
   }
